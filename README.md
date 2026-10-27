@@ -39,7 +39,7 @@ nyitni a felhasználónak, a segéd pedig nem lát minden rendszeradatot).
 | **Használatban** (occupancy), **Zárolva**, Tétlenség (perc) | a segédtől; használatban = bejelentkezve, nincs zárolva, 5 percen belül volt bevitel |
 | Memória top program (attr.: a 10 legtöbb memóriát használó program, név szerint összevonva) | percenként |
 | Windows-frissítések (attr.: címek), Újraindítás szükséges | a Windows saját utolsó ellenőrzéséből, 4 óránként (nem indít letöltést) |
-| Bekapcsolás ideje, Windows-verzió, Monitor verzió | |
+| Bekapcsolás ideje (attr.: mód — hidegindítás / gyorsindítás / hibernálásból / felébredés alvásból; kernel-indulás), Windows-verzió, Monitor verzió | a bekapcsolás a Rendszer-eseménynaplóból (Kernel-Boot 27, Kernel-Power 107) jön, így gyorsindításnál is a valódi bekapcsolást mutatja |
 | MAC-cím (Wake-on-LAN) | kikapcsolt gépnél is megmarad — a HA ebből ébreszt |
 | Utolsó parancs, Függő művelet (attr.: határidő) | audit + a futó visszaszámlálás |
 | Gombok: **Leállítás**, **Újraindítás**, **Alvó mód**, **Hibernálás**, **Leállítás megszakítása**, **Zárolás**, **Képernyő ki**, Adatok frissítése | az alvó mód / hibernálás csak ha a gép támogatja |
@@ -55,8 +55,9 @@ végrehajtódik. A leállítás nem kényszerített (`shutdown /s /t 0`): ha egy
 dokumentum miatt megakasztja, a gép 3 perc után újra „online”-nak jelenti magát.
 
 Megjegyzés: a **Gyors rendszerindítás** (Fast Startup) bekapcsolt állapotában a Start menüs
-„Leállítás” valójában hibernálás — a Bekapcsolás ideje ilyenkor nem változik. A HA-ból kért
-leállítás (`shutdown /s`) teljes leállítás.
+„Leállítás” valójában a kernel hibernálása, így a kernel üzemideje napokig-hetekig nő. A Bekapcsolás
+ideje ezért nem a kernel-indulás (az csak attribútum), hanem a legutóbbi tényleges bekapcsolás vagy
+ébredés az eseménynaplóból. A HA-ból kért leállítás (`shutdown /s`) teljes leállítás.
 
 ## Telepítés
 

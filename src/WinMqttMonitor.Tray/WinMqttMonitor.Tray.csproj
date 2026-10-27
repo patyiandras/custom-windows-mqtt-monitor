@@ -6,7 +6,7 @@
     <UseWindowsForms>true</UseWindowsForms>
     <AssemblyName>WinMqttMonitorTray</AssemblyName>
     <RootNamespace>WinMqttMonitor.Tray</RootNamespace>
-    <Version>0.1.1</Version>
+    <Version>0.1.2</Version>
     <Product>custom-windows-mqtt-monitor</Product>
     <Description>A WinMqttMonitor tálcás segédje a felhasználó sessionjében</Description>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>

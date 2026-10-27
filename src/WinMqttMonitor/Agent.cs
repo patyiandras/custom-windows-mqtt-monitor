@@ -21,7 +21,7 @@ namespace WinMqttMonitor
     /// </summary>
     public class Agent
     {
-        public const string Version = "0.1.1";
+        public const string Version = "0.1.2";
         public const string RepoUrl = "https://github.com/patyiandras/custom-windows-mqtt-monitor";
 
         readonly Config cfg;
@@ -38,7 +38,7 @@ namespace WinMqttMonitor
         DateTime nextConnect = DateTime.MinValue;
         int connectBackoff = 1;
         DateTime nextFast, nextSlow, nextProc, nextSession, nextUpdates;
-        DateTime bootTime = SystemInfo.BootTime();
+        readonly DateTime kernelBoot = SystemInfo.BootTime(); // a monitor indulásakor; gyorsindításnál régi lehet
         Dictionary<string, Dictionary<string, object>> discovery = new Dictionary<string, Dictionary<string, object>>();
         string discoveryShape;
         List<Dictionary<string, object>> disks = new List<Dictionary<string, object>>();
@@ -245,7 +245,7 @@ namespace WinMqttMonitor
                         case "ha_online": OnConnected(); break;
                         case "resume":
                             Log.Info("Energiaesemény: felébredés");
-                            bootTime = SystemInfo.BootTime();
+                            nextSlow = DateTime.UtcNow.AddSeconds(20); // a napló ébredés-bejegyzése kicsit később jelenik meg
                             try { client.DisconnectAsync().Wait(2000); } catch (Exception) { }
                             nextConnect = DateTime.MinValue;
                             break;
@@ -427,7 +427,9 @@ namespace WinMqttMonitor
                 Sensor("akkumulator", "Akkumulátor", fast, "battery", With(meas, O("unit_of_measurement", "%", "device_class", "battery")));
                 Binary("toltes", "Töltés", fast, "charging", O("device_class", "battery_charging"));
             }
-            Sensor("bekapcsolas_ideje", "Bekapcsolás ideje", slow, "boot_time", O("device_class", "timestamp"));
+            Sensor("bekapcsolas_ideje", "Bekapcsolás ideje", slow, "boot_time", O("device_class", "timestamp",
+                "json_attributes_topic", slow,
+                "json_attributes_template", "{{ {'mod': value_json.power_on_kind, 'kernel_indulas': value_json.kernel_boot} | tojson }}"));
 
             Sensor("felhasznalo", "Bejelentkezett felhasználó", sess, "user", O("icon", "mdi:account", "json_attributes_topic", sess,
                 "json_attributes_template", "{{ {'session': value_json.session, 'tavoli': value_json.remote, 'talcas_seged': value_json.tray} | tojson }}"));
@@ -545,9 +547,12 @@ namespace WinMqttMonitor
                 SyncDiscovery();
             }
             Publish($"{baseTopic}/disks", disks.ToDictionary(d => (string)d["key"], d => (object)d));
+            var powerOn = SystemInfo.LastPowerOn();
             Publish($"{baseTopic}/system_slow", new Dictionary<string, object>
             {
-                ["boot_time"] = Iso(bootTime),
+                ["boot_time"] = Iso(powerOn?.utc ?? kernelBoot),
+                ["power_on_kind"] = powerOn?.kind ?? "ismeretlen",
+                ["kernel_boot"] = Iso(kernelBoot),
                 ["reboot_required"] = SafeBool(SystemInfo.RebootRequired),
                 ["os"] = $"{sys.OsName} {sys.OsVersion}",
                 ["agent_version"] = Version,

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.Eventing.Reader;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -151,6 +152,49 @@ namespace WinMqttMonitor
         {
             var t = DateTime.UtcNow.AddMilliseconds(-(double)Native.GetTickCount64());
             return new DateTime(t.Year, t.Month, t.Day, t.Hour, t.Minute, t.Second, DateTimeKind.Utc);
+        }
+
+        const string PowerOnQuery =
+            "*[System[(Provider[@Name='Microsoft-Windows-Kernel-Boot'] and EventID=27)" +
+            " or (Provider[@Name='Microsoft-Windows-Kernel-General'] and EventID=12)" +
+            " or (Provider[@Name='Microsoft-Windows-Kernel-Power'] and EventID=107)" +
+            " or (Provider[@Name='Microsoft-Windows-Power-Troubleshooter'] and EventID=1)]]";
+
+        /// <summary>
+        /// A legutóbbi tényleges bekapcsolás / ébredés a Rendszer-eseménynaplóból — ez a felhasználó szerinti
+        /// „bekapcsolás”. A BootTime() (kernel-indulás) gyorsindításnál (Fast Startup) a leállítás után sem
+        /// változik, mert a kernel ilyenkor csak hibernálódik; a Kernel-Boot 27 viszont minden indításkor
+        /// bekerül a naplóba (BootType: 0 = hidegindítás, 1 = gyorsindítás, 2 = hibernálásból).
+        /// Ha a napló nem olvasható: null.
+        /// </summary>
+        public static (DateTime utc, string kind)? LastPowerOn()
+        {
+            try
+            {
+                var query = new EventLogQuery("System", PathType.LogName, PowerOnQuery) { ReverseDirection = true };
+                using (var reader = new EventLogReader(query))
+                using (var ev = reader.ReadEvent())
+                {
+                    if (ev?.TimeCreated == null) { return null; }
+                    string kind;
+                    switch (ev.Id)
+                    {
+                        case 27:
+                            var type = ev.Properties.Count > 0 ? Convert.ToInt32(ev.Properties[0].Value) : 0;
+                            kind = type == 1 ? "gyorsindítás (Fast Startup)" : type == 2 ? "hibernálásból" : "hidegindítás";
+                            break;
+                        case 12: kind = "hidegindítás"; break;
+                        default: kind = "felébredés alvásból"; break;
+                    }
+                    var t = ev.TimeCreated.Value.ToUniversalTime();
+                    return (new DateTime(t.Year, t.Month, t.Day, t.Hour, t.Minute, t.Second, DateTimeKind.Utc), kind);
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Warn("Eseménynapló (bekapcsolás ideje) nem olvasható: " + ex.Message);
+                return null;
+            }
         }
 
         public Dictionary<string, object> Battery()
