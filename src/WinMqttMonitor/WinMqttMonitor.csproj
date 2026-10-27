@@ -5,7 +5,7 @@
     <LangVersion>latest</LangVersion>
     <AssemblyName>WinMqttMonitor</AssemblyName>
     <RootNamespace>WinMqttMonitor</RootNamespace>
-    <Version>0.1.0</Version>
+    <Version>0.1.1</Version>
     <Product>custom-windows-mqtt-monitor</Product>
     <Description>Windows PC → Home Assistant (MQTT discovery) monitor és vezérlő szolgáltatás</Description>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>

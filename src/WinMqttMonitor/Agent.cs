@@ -21,7 +21,7 @@ namespace WinMqttMonitor
     /// </summary>
     public class Agent
     {
-        public const string Version = "0.1.0";
+        public const string Version = "0.1.1";
         public const string RepoUrl = "https://github.com/patyiandras/custom-windows-mqtt-monitor";
 
         readonly Config cfg;
@@ -169,7 +169,7 @@ namespace WinMqttMonitor
             }
             catch (Exception) { }
             foreach (var t in topics) { Publish(t, "", force: true); }
-            foreach (var t in new[] { "system", "system_slow", "session", "processes", "disks", "services", "updates", "pending", "last_command", "status" })
+            foreach (var t in new[] { "system", "system_slow", "session", "processes", "disks", "services", "updates", "pending", "last_command", "status", "wol" })
             {
                 Publish($"{baseTopic}/{t}", "", force: true);
             }
@@ -414,6 +414,9 @@ namespace WinMqttMonitor
             Sensor("halozat_fel", "Hálózat fel", fast, "net_tx", With(meas, O("unit_of_measurement", "kB/s", "device_class", "data_rate")));
             Sensor("ip_cim", "IP-cím", fast, "ip", With(diag, O("icon", "mdi:ip-network", "json_attributes_topic", fast,
                 "json_attributes_template", "{{ {'mac': value_json.mac, 'csatolo': value_json.iface, 'leiras': value_json.iface_desc, 'link_mbps': value_json.link_mbps} | tojson }}")));
+            // A Wake-on-LAN-hoz: availability nélkül, megőrzött üzenetből — kikapcsolt gépnél is olvasható a HA-ban.
+            Entity("sensor", "mac_cim", "MAC-cím (Wake-on-LAN)", With(diag, O("state_topic", $"{baseTopic}/wol",
+                "value_template", "{{ value_json.mac }}", "icon", "mdi:lan-connect")), availability: false);
             if (sys.HasWifi)
             {
                 Sensor("wifi_jel", "WiFi-jel", fast, "wifi_signal", With(With(meas, diag), O("unit_of_measurement", "%", "icon", "mdi:wifi",
@@ -550,6 +553,8 @@ namespace WinMqttMonitor
                 ["agent_version"] = Version,
                 ["hostname"] = sys.Hostname,
             });
+            var mac = string.IsNullOrWhiteSpace(cfg.WolMac) ? SystemInfo.Mac(SystemInfo.PrimaryInterface()) : cfg.WolMac.Trim().ToLowerInvariant().Replace('-', ':');
+            if (mac != null) { Publish($"{baseTopic}/wol", new Dictionary<string, object> { ["mac"] = mac }); }
             CollectServices();
         }
 

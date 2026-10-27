@@ -21,6 +21,7 @@ namespace WinMqttMonitor
 
         public string DeviceId = "pc";
         public string DeviceName = "Számítógép";
+        public string WolMac = ""; // üres = az alapértelmezett átjárós hálózati kártya MAC-je
 
         public int FastInterval = 30;
         public int SlowInterval = 300;
@@ -72,6 +73,7 @@ namespace WinMqttMonitor
             var d = Section(root, "device");
             c.DeviceId = d.Str("id", c.DeviceId);
             c.DeviceName = d.Str("name", c.DeviceName);
+            c.WolMac = d.Str("wol_mac", c.WolMac);
 
             var i = Section(root, "intervals");
             c.FastInterval = (int)i.Num("fast", c.FastInterval);

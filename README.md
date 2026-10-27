@@ -40,6 +40,7 @@ nyitni a felhasználónak, a segéd pedig nem lát minden rendszeradatot).
 | Memória top program (attr.: a 10 legtöbb memóriát használó program, név szerint összevonva) | percenként |
 | Windows-frissítések (attr.: címek), Újraindítás szükséges | a Windows saját utolsó ellenőrzéséből, 4 óránként (nem indít letöltést) |
 | Bekapcsolás ideje, Windows-verzió, Monitor verzió | |
+| MAC-cím (Wake-on-LAN) | kikapcsolt gépnél is megmarad — a HA ebből ébreszt |
 | Utolsó parancs, Függő művelet (attr.: határidő) | audit + a futó visszaszámlálás |
 | Gombok: **Leállítás**, **Újraindítás**, **Alvó mód**, **Hibernálás**, **Leállítás megszakítása**, **Zárolás**, **Képernyő ki**, Adatok frissítése | az alvó mód / hibernálás csak ha a gép támogatja |
 | **Üzenet a képernyőre** (szöveg) | Windows-értesítésként jelenik meg a felhasználónak |
@@ -89,6 +90,7 @@ Napló: `C:\ProgramData\WinMqttMonitor\logs\monitor.log` (a tálca-ikon menüjé
 | `mqtt.host`, `port`, `username`, `password` | `192.168.0.137`, `1883` | a HA Mosquitto |
 | `mqtt.tls`, `tls_insecure` | `false` | TLS (8883) |
 | `device.id`, `device.name` | `pc`, `Számítógép` | az `id` az entitás-előtag (`sensor.pc_cpu_terheles`) és a topic része |
+| `device.wol_mac` | üres | a Wake-on-LAN MAC-címe, ha nem az alapértelmezett átjárós kártyáé kell |
 | `intervals.fast` / `slow` / `processes` / `updates` / `session` | 30 / 300 / 60 / 14400 / 5 mp | |
 | `power.countdown` | 30 | a visszaszámlálás hossza (mp) |
 | `power.allow_shutdown` / `allow_restart` / `allow_sleep` / `allow_hibernate` | `true` | a tiltott művelet gombja meg sem jelenik |
@@ -105,23 +107,30 @@ Módosítás után: `Restart-Service WinMqttMonitor`.
 
 A kapcsoló „be” parancsa a `win-mqtt-monitor/pc/cmd/power` topicra `ON`-t küld — ezt a kikapcsolt
 gép nem hallja, ezért a HA-nak kell felébresztenie. Kell hozzá a BIOS-ban és a hálózati kártya
-energiagazdálkodásában engedélyezett Wake-on-LAN. HA-csomag (pl. `packages/szamitogep.yaml`; a MAC a
-`sensor.pc_ip_cim` `mac` attribútumából olvasható ki, amíg a gép be van kapcsolva):
+energiagazdálkodásában engedélyezett Wake-on-LAN.
+
+A MAC-címet a monitor maga küldi a **MAC-cím (Wake-on-LAN)** szenzorban (`sensor.pc_mac_cim`):
+ez availability nélküli, megőrzött üzenet, így kikapcsolt gépnél is olvasható — a MAC-nek nem kell
+a HA-configban szerepelnie. Alapból az alapértelmezett átjárós hálózati kártya MAC-je; több kártyánál
+a `device.wol_mac` kulccsal rögzíthető. HA-oldal (`configuration.yaml`-ban `wake_on_lan:` is kell):
 
 ```yaml
-wake_on_lan:
-
 automation:
-  - id: szamitogep_wol
+  - id: szamitogep_wake_on_lan
     alias: Számítógép bekapcsolása (Wake-on-LAN)
     triggers:
       - trigger: mqtt
         topic: win-mqtt-monitor/pc/cmd/power
         payload: "ON"
+    conditions:
+      - condition: template
+        value_template: "{{ states('sensor.pc_mac_cim') | regex_match('^([0-9a-f]{2}:){5}[0-9a-f]{2}$', ignorecase=True) }}"
     actions:
       - action: wake_on_lan.send_magic_packet
         data:
-          mac: "aa:bb:cc:dd:ee:ff"
+          mac: "{{ states('sensor.pc_mac_cim') }}"
+          broadcast_address: 255.255.255.255
+          broadcast_port: 7
 ```
 
 ## Átállás a SmartThingsről
