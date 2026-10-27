@@ -1,0 +1,44 @@
+{
+  "mqtt": {
+    "host": "192.168.0.137",
+    "port": 1883,
+    "username": "pc",
+    "password": "IDE_A_JELSZO",
+    "tls": false,
+    "discovery_prefix": "homeassistant",
+    "base_topic": "win-mqtt-monitor"
+  },
+  "device": {
+    "id": "pc",
+    "name": "Számítógép"
+  },
+  "intervals": {
+    "fast": 30,
+    "slow": 300,
+    "processes": 60,
+    "updates": 14400,
+    "session": 5
+  },
+  "power": {
+    "countdown": 30,
+    "allow_shutdown": true,
+    "allow_restart": true,
+    "allow_sleep": true,
+    "allow_hibernate": true,
+    "command_grace": 60,
+    "command_cooldown": 10
+  },
+  "services": {
+    "names": [],
+    "restart": true
+  },
+  "legacy_http": {
+    "enabled": true,
+    "port": 7268
+  },
+  "sensors": {
+    "cpu_temp": true,
+    "gpu": true,
+    "windows_update": true
+  }
+}

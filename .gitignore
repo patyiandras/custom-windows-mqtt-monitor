@@ -6,3 +6,4 @@ publish/
 *.user
 # Helyi beállítás (MQTT-jelszó!) — csak a példa verziókövetett
 config.json
+.testdata/
