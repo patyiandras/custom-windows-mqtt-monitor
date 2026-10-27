@@ -28,7 +28,7 @@ if (-not (Test-Path $config)) {
     Copy-Item (Join-Path $src 'config.example.json') $config
     icacls $config /inheritance:r /grant:r 'SYSTEM:F' '*S-1-5-32-544:F' | Out-Null
     Write-Host "Létrehozva: $config" -ForegroundColor Yellow
-    Write-Host 'Írd bele az MQTT-jelszót (és ha kell, a gép nevét), majd futtasd újra az install.ps1-et.' -ForegroundColor Yellow
+    Write-Host 'Írd bele az MQTT-jelszót (és ha kell, a gép nevét), majd futtasd újra az install.cmd-t.' -ForegroundColor Yellow
     notepad $config
     exit 1
 }

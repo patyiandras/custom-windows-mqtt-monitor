@@ -62,13 +62,17 @@ leállítás (`shutdown /s`) teljes leállítás.
 
 1. Mosquitto add-on → *Configuration → Logins*: saját felhasználó a PC-nek (pl. `pc`).
 2. Fordítás (bármelyik gépen, ahol van .NET SDK): `.\build.ps1` → a `publish\` mappa a telepítőcsomag.
-3. A cél-PC-n, **rendszergazdai PowerShellben**, a `publish\` mappából (vagy a repó gyökeréből):
+3. A cél-PC-n a `publish\` mappában (vagy a repó gyökerében) **dupla kattintás az `install.cmd`-re**:
+   UAC-jóváhagyás után rendszergazdaként, a végrehajtási házirend megkerülésével futtatja az
+   `install.ps1`-et (a Windows alapból tiltja a .ps1-ek futtatását: *„running scripts is disabled
+   on this system”*). Kézzel, rendszergazdai PowerShellből ugyanez:
    ```powershell
-   Set-ExecutionPolicy -Scope Process Bypass
-   .\install.ps1
+   powershell -ExecutionPolicy Bypass -File .\install.ps1
    ```
+   Ha a mappa hálózati meghajtón van, a rendszergazdai ablak nem látja a meghajtó betűjelét —
+   ilyenkor másold a csomagot helyi mappába.
    Az első futás létrehozza a `C:\ProgramData\WinMqttMonitor\config.json`-t és megnyitja Jegyzettömbben:
-   írd bele az MQTT-jelszót (és ha kell, a gép nevét / `id`-jét), majd futtasd újra az `install.ps1`-et.
+   írd bele az MQTT-jelszót (és ha kell, a gép nevét / `id`-jét), majd futtasd újra az `install.cmd`-t.
    A config.json-t csak a SYSTEM és a rendszergazdák olvashatják.
 
 Az install.ps1 ezen felül:
@@ -78,7 +82,7 @@ Az install.ps1 ezen felül:
 - a tálcás segédet minden bejelentkezéshez beállítja (HKLM\…\Run) és el is indítja;
 - a régi SmartThings-végponthoz tűzfalszabályt nyit (privát hálózat, TCP 7268).
 
-Frissítés: ugyanígy `.\install.ps1` (a configot nem bántja). Eltávolítás: `.\uninstall.ps1`
+Frissítés: ugyanígy `install.cmd` (a configot nem bántja). Eltávolítás: `uninstall.cmd`
 (a HA-ból is törli az eszközt; `-Purge` a configot és a naplót is).
 
 Napló: `C:\ProgramData\WinMqttMonitor\logs\monitor.log` (a tálca-ikon menüjéből is megnyitható).
