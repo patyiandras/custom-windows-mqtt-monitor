@@ -21,7 +21,7 @@ namespace WinMqttMonitor
     /// </summary>
     public class Agent
     {
-        public const string Version = "0.1.6";
+        public const string Version = "0.1.7";
         public const string RepoUrl = "https://github.com/patyiandras/custom-windows-mqtt-monitor";
 
         readonly Config cfg;
@@ -638,9 +638,10 @@ namespace WinMqttMonitor
             // Teljes képernyős app (film, játék, prezentáció) bevitel nélkül is használat
             bool fullscreen = trayFresh && !locked && tray.Bool("fullscreen");
             // A kijelző (a Windows energiagazdálkodása vagy a „Képernyő ki” kapcsolta le): ilyenkor senki nem nézi a gépet,
-            // a teljes képernyős program (pl. távoli asztal) vagy egy friss bevitel ellenére sem „használatban”
+            // a teljes képernyős program vagy egy friss bevitel ellenére sem „használatban”. Kivétel a távoli asztali
+            // session: ott a felhasználó a saját gépén dolgozik, a konzol kijelzője közömbös.
             var display = trayFresh ? tray.Str("display") ?? "unknown" : "unknown";
-            bool displayOff = display == "off";
+            bool displayOff = display == "off" && !remote;
             bool active = user != null && trayFresh && !locked;
             string Cut(string v) => v == null ? null : v.Length > 250 ? v.Substring(0, 250) : v;
             Publish($"{baseTopic}/session", new Dictionary<string, object>
