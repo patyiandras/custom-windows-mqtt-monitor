@@ -44,7 +44,7 @@ nyitni a felhasználónak, a segéd pedig nem lát minden rendszeradatot).
 | Bekapcsolás ideje (attr.: mód — hidegindítás / gyorsindítás / hibernálásból / felébredés alvásból; kernel-indulás), Windows-verzió, Monitor verzió | a bekapcsolás a Rendszer-eseménynaplóból (Kernel-Boot 27, Kernel-Power 107) jön, így gyorsindításnál is a valódi bekapcsolást mutatja |
 | MAC-cím (Wake-on-LAN) | kikapcsolt gépnél is megmarad — a HA ebből ébreszt |
 | Utolsó parancs, Függő művelet (attr.: határidő) | audit + a futó visszaszámlálás |
-| Gombok: **Leállítás**, **Újraindítás**, **Alvó mód**, **Hibernálás**, **Leállítás megszakítása**, **Zárolás**, **Képernyő ki**, Adatok frissítése | az alvó mód / hibernálás csak ha a gép támogatja |
+| Gombok: **Leállítás**, **Újraindítás**, **Alvó mód**, **Hibernálás**, **Leállítás megszakítása**, **Zárolás**, **Képernyő ki** / **Képernyő be**, Adatok frissítése | az alvó mód / hibernálás csak ha a gép támogatja |
 | **Üzenet a képernyőre** (szöveg) | Windows-értesítésként jelenik meg a felhasználónak („Home Assistant” fejléccel); `Cím \| szöveg` formában saját cím adható, egyébként „🏠 Üzenet otthonról” |
 | `Szolgáltatás <név>` fut-e + `<név> újraindítása` | a configban felsorolt Windows-szolgáltatásokhoz |
 

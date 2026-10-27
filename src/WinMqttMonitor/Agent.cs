@@ -21,7 +21,7 @@ namespace WinMqttMonitor
     /// </summary>
     public class Agent
     {
-        public const string Version = "0.1.7";
+        public const string Version = "0.1.8";
         public const string RepoUrl = "https://github.com/patyiandras/custom-windows-mqtt-monitor";
 
         readonly Config cfg;
@@ -480,6 +480,7 @@ namespace WinMqttMonitor
             Button("megszakitas", "Leállítás megszakítása", "cancel", O("icon", "mdi:cancel"));
             Button("zarolas", "Zárolás", "lock", O("icon", "mdi:monitor-lock"));
             Button("kepernyo_ki", "Képernyő ki", "monitor_off", O("icon", "mdi:monitor-off"));
+            Button("kepernyo_be", "Képernyő be", "monitor_on", O("icon", "mdi:monitor"));
             Button("frissites", "Adatok frissítése", "refresh", With(diag, O("icon", "mdi:refresh")));
             Entity("text", "uzenet", "Üzenet a képernyőre", O("command_topic", $"{baseTopic}/cmd/notify", "mode", "text",
                 "min", 0, "max", 255, "retain", false, "icon", "mdi:message-text"));
@@ -729,6 +730,9 @@ namespace WinMqttMonitor
                     return;
                 case "lock":
                     TrayCommand("Zárolás", new Dictionary<string, object> { ["action"] = "lock" });
+                    return;
+                case "monitor_on":
+                    TrayCommand("Képernyő be", new Dictionary<string, object> { ["action"] = "monitor_on" });
                     return;
                 case "monitor_off":
                     TrayCommand("Képernyő ki", new Dictionary<string, object> { ["action"] = "monitor_off" });

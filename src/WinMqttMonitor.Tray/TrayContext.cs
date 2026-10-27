@@ -135,6 +135,9 @@ namespace WinMqttMonitor.Tray
                     case "monitor_off":
                         SendMessage(countdown.Handle, WM_SYSCOMMAND, (IntPtr)SC_MONITORPOWER, (IntPtr)2);
                         break;
+                    case "monitor_on":
+                        WakeDisplay();
+                        break;
                     case "notify":
                         icon.ShowBalloonTip(15000, cmd.Str("title", "🏠 Üzenet otthonról"), cmd.Str("text", ""), ToolTipIcon.None);
                         break;
@@ -187,6 +190,33 @@ namespace WinMqttMonitor.Tray
         static extern IntPtr SendMessage(IntPtr hWnd, int msg, IntPtr wParam, IntPtr lParam);
 
         const int WM_SYSCOMMAND = 0x0112, SC_MONITORPOWER = 0xF170;
+
+        /// <summary>
+        /// A kijelző visszakapcsolása. Az SC_MONITORPOWER „be” (-1) üzenetet az újabb Windowsok gyakran figyelmen
+        /// kívül hagyják, ezért a kijelző-üresjárati számlálót is lenullázzuk (ES_DISPLAY_REQUIRED), és egy nulla
+        /// elmozdulású egérmozgást is szimulálunk — ez a bevitel ugyanúgy felébreszti a kijelzőt, mint egy valódi.
+        /// </summary>
+        void WakeDisplay()
+        {
+            SendMessage(countdown.Handle, WM_SYSCOMMAND, (IntPtr)SC_MONITORPOWER, (IntPtr)(-1));
+            SetThreadExecutionState(ES_DISPLAY_REQUIRED);
+            var input = new INPUT { type = INPUT_MOUSE, mi = new MOUSEINPUT { dwFlags = MOUSEEVENTF_MOVE } };
+            SendInput(1, new[] { input }, Marshal.SizeOf(typeof(INPUT)));
+        }
+
+        const uint ES_DISPLAY_REQUIRED = 0x00000002, INPUT_MOUSE = 0, MOUSEEVENTF_MOVE = 0x0001;
+
+        [StructLayout(LayoutKind.Sequential)]
+        struct MOUSEINPUT { public int dx, dy; public uint mouseData, dwFlags, time; public IntPtr dwExtraInfo; }
+
+        [StructLayout(LayoutKind.Sequential)]
+        struct INPUT { public uint type; public MOUSEINPUT mi; }
+
+        [DllImport("kernel32.dll")]
+        static extern uint SetThreadExecutionState(uint flags);
+
+        [DllImport("user32.dll", SetLastError = true)]
+        static extern uint SendInput(uint count, INPUT[] inputs, int size);
 
         static TimeSpan IdleTime()
         {
