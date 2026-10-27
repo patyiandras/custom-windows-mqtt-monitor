@@ -70,6 +70,10 @@ ideje ezért nem a kernel-indulás (az csak attribútum), hanem a legutóbbi té
    ```powershell
    powershell -ExecutionPolicy Bypass -File .\install.ps1
    ```
+   Ha a csomagot letöltötted (zip), a Windows SmartScreen „A Windows megvédte a számítógépet” ablakot
+   mutathat az `install.cmd`-nél (a fájl nincs digitálisan aláírva): *További információ → Futtatás
+   mindenképp*. Megelőzhető, ha kicsomagolás előtt a zip Tulajdonságainál bepipálod a *Tiltás feloldása*
+   jelölőt. A telepített fájlokról az install.ps1 leveszi ezt a jelölést.
    Ha a mappa hálózati meghajtón van, a rendszergazdai ablak nem látja a meghajtó betűjelét —
    ilyenkor másold a csomagot helyi mappába.
    Az első futás létrehozza a `C:\ProgramData\WinMqttMonitor\config.json`-t és megnyitja Jegyzettömbben:

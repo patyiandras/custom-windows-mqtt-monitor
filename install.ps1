@@ -79,6 +79,9 @@ if ($svc -and $svc.Status -ne 'Stopped') { Stop-Service $service -Force }
 Get-Process -Name 'WinMqttMonitorTray' -ErrorAction SilentlyContinue | Stop-Process -Force
 New-Item -ItemType Directory -Force $InstallDir | Out-Null
 Copy-Item (Join-Path $src '*') $InstallDir -Include *.exe, *.dll, *.config -Force
+# Az internetről (pl. chatből) letöltött csomag fájljain „internetről származik” jelölés (Zone.Identifier) van,
+# és a másolás ezt is viszi: a tálcás segéd indításakor a SmartScreen minden bejelentkezéskor rákérdezne.
+Get-ChildItem $InstallDir -File | Unblock-File
 $exe = Join-Path $InstallDir 'WinMqttMonitor.exe'
 $tray = Join-Path $InstallDir 'WinMqttMonitorTray.exe'
 
