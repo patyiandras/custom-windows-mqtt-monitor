@@ -86,7 +86,7 @@ Az install.ps1 ezen felül:
 - regisztrálja a `WinMqttMonitor` szolgáltatást (automatikus indulás, hibánál 10/30/60 mp után újraindul);
 - a tálcás segédet minden bejelentkezéshez beállítja (HKLM\…\Run) és el is indítja; ha mégsem fut (nem indult el,
   összeomlott), a szolgáltatás 5 mp-en belül elindítja a bejelentkezett felhasználó sessionjében (a saját, nem emelt
-  jogaival); a segéd esetleges hibái: `C:\ProgramData\WinMqttMonitor\ipc	ray-<session>.log`;
+  jogaival); a segéd esetleges hibái: `C:\ProgramData\WinMqttMonitor\ipc\tray-<session>.log`;
 - a régi SmartThings-végponthoz tűzfalszabályt nyit (privát hálózat, TCP 7268).
 
 Frissítés: ugyanígy `install.cmd` (a configot nem bántja). Eltávolítás: `uninstall.cmd`
