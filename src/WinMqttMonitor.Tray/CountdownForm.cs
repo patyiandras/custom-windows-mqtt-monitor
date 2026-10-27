@@ -39,7 +39,14 @@ namespace WinMqttMonitor.Tray
             Controls.Add(label);
             Controls.Add(cancel);
             CreateHandle(); // a képernyő-kikapcsolás (SendMessage) a rejtett ablak handle-jét használja
+            // A kijelző be/ki állapota: a Windows feliratkozáskor azonnal, utána minden változáskor
+            // WM_POWERBROADCAST / PBT_POWERSETTINGCHANGE üzenetet küld erre az ablakra.
+            var guid = GUID_CONSOLE_DISPLAY_STATE;
+            RegisterPowerSettingNotification(Handle, ref guid, DEVICE_NOTIFY_WINDOW_HANDLE);
         }
+
+        /// <summary>A konzol kijelzőjének állapota: "on", "off", "dimmed" (halványítva), vagy null, ha még nem jött jelzés.</summary>
+        public string DisplayState { get; private set; }
 
         public string Message { set { if (label.Text != value) { label.Text = value; } } }
 
@@ -68,8 +75,30 @@ namespace WinMqttMonitor.Tray
         {
             const int WM_MOUSEACTIVATE = 0x0021, MA_NOACTIVATE = 0x0003;
             if (m.Msg == WM_MOUSEACTIVATE) { m.Result = (IntPtr)MA_NOACTIVATE; return; }
+            if (m.Msg == WM_POWERBROADCAST && (int)m.WParam == PBT_POWERSETTINGCHANGE && m.LParam != IntPtr.Zero)
+            {
+                var setting = (POWERBROADCAST_SETTING)Marshal.PtrToStructure(m.LParam, typeof(POWERBROADCAST_SETTING));
+                if (setting.PowerSetting == GUID_CONSOLE_DISPLAY_STATE)
+                {
+                    DisplayState = setting.Data == 0 ? "off" : setting.Data == 2 ? "dimmed" : "on";
+                }
+            }
             base.WndProc(ref m);
         }
+
+        const int WM_POWERBROADCAST = 0x0218, PBT_POWERSETTINGCHANGE = 0x8013, DEVICE_NOTIFY_WINDOW_HANDLE = 0;
+        static readonly Guid GUID_CONSOLE_DISPLAY_STATE = new Guid("6fe69556-704a-47a0-8f24-c28d936fda47");
+
+        [StructLayout(LayoutKind.Sequential, Pack = 4)]
+        struct POWERBROADCAST_SETTING
+        {
+            public Guid PowerSetting;
+            public uint DataLength;
+            public uint Data; // a kijelző-állapotnál 4 bájtos DWORD: 0 = ki, 1 = be, 2 = halványítva
+        }
+
+        [DllImport("user32.dll", SetLastError = true)]
+        static extern IntPtr RegisterPowerSettingNotification(IntPtr recipient, ref Guid powerSettingGuid, int flags);
 
         const int SW_SHOWNOACTIVATE = 4;
         static readonly IntPtr HWND_TOPMOST = new IntPtr(-1);

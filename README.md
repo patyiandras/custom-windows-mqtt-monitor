@@ -36,7 +36,8 @@ nyitni a felhasználónak, a segéd pedig nem lát minden rendszeradatot).
 | Akkumulátor, Töltés | csak laptopon |
 | `Lemez C:`, `Lemez D:`, … telítettség % (attr.: szabad/összes GB, címke, fájlrendszer) | minden belső meghajtó, 5 percenként; új/eltűnt meghajtó magától követi |
 | Bejelentkezett felhasználó (attr.: session, távoli-e, fut-e a segéd) | konzol, ha ott senki: aktív RDP-session |
-| **Használatban** (occupancy), **Zárolva**, Tétlenség (perc) | a segédtől; használatban = bejelentkezve, nincs zárolva, és 5 percen belül volt billentyűzet/egér-bevitel *vagy* teljes képernyős program fut (film, játék, prezentáció) |
+| **Használatban** (occupancy), **Zárolva**, Tétlenség (perc) | a segédtől; használatban = bejelentkezve, nincs zárolva, a kijelző nincs kikapcsolva, és 5 percen belül volt billentyűzet/egér-bevitel *vagy* teljes képernyős program fut (film, játék, prezentáció, távoli asztal) |
+| **Kijelző** (be/ki; attr.: on / off / dimmed) | a Windows saját kijelző-állapota (energiagazdálkodás, „Képernyő ki” gomb); a monitor saját gombjával kikapcsolást a Windows nem érzékeli |
 | **Előtérben lévő program** (attr.: folyamat, ablakcím, teljes képernyő) | a segédtől, váltáskor azonnal; a név a program fájlleírása (pl. „Google Chrome”), Store-os appoknál is a valódi app; zárolt gépnél „–” |
 | Memória top program (attr.: a 10 legtöbb memóriát használó program, név szerint összevonva) | percenként |
 | Windows-frissítések (attr.: címek), Újraindítás szükséges | a Windows saját utolsó ellenőrzéséből, 4 óránként (nem indít letöltést) |

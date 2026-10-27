@@ -23,6 +23,7 @@ namespace WinMqttMonitor.Tray
         bool locked;
         DateTime nextReport = DateTime.MinValue;
         Foreground.Info foreground = new Foreground.Info();
+        string reportedDisplay;
         DateTime nextForeground = DateTime.MinValue;
         string shownDeadline;
 
@@ -69,7 +70,7 @@ namespace WinMqttMonitor.Tray
             if (DateTime.UtcNow < nextForeground) { return; }
             nextForeground = DateTime.UtcNow.AddSeconds(1);
             var fg = Foreground.Get();
-            if (fg.Key != foreground.Key) { nextReport = DateTime.MinValue; }
+            if (fg.Key != foreground.Key || countdown.DisplayState != reportedDisplay) { nextReport = DateTime.MinValue; }
             foreground = fg;
         }
 
@@ -87,6 +88,7 @@ namespace WinMqttMonitor.Tray
                 ["fg_process"] = foreground.Process,
                 ["fg_title"] = foreground.Title,
                 ["fullscreen"] = foreground.Fullscreen,
+                ["display"] = reportedDisplay = countdown.DisplayState,
             });
         }
 

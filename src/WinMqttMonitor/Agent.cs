@@ -21,7 +21,7 @@ namespace WinMqttMonitor
     /// </summary>
     public class Agent
     {
-        public const string Version = "0.1.5";
+        public const string Version = "0.1.6";
         public const string RepoUrl = "https://github.com/patyiandras/custom-windows-mqtt-monitor";
 
         readonly Config cfg;
@@ -435,6 +435,9 @@ namespace WinMqttMonitor
                 "json_attributes_template", "{{ {'session': value_json.session, 'tavoli': value_json.remote, 'talcas_seged': value_json.tray} | tojson }}"));
             Binary("hasznalatban", "Használatban", sess, "in_use", O("device_class", "occupancy"));
             Binary("zarolva", "Zárolva", sess, "locked", O("icon", "mdi:monitor-lock"));
+            Entity("binary_sensor", "kijelzo", "Kijelző", O("state_topic", sess, "device_class", "power",
+                "value_template", "{% if value_json.display in ['on', 'dimmed'] %}ON{% elif value_json.display == 'off' %}OFF{% else %}None{% endif %}",
+                "json_attributes_topic", sess, "json_attributes_template", "{{ {'allapot': value_json.display} | tojson }}"));
             if (cfg.Foreground)
             {
                 Sensor("elotter", "Előtérben lévő program", sess, "fg_app", O("icon", "mdi:application-outline",
@@ -634,6 +637,10 @@ namespace WinMqttMonitor
             double idleSec = trayFresh ? tray.Num("idle_sec") : 0;
             // Teljes képernyős app (film, játék, prezentáció) bevitel nélkül is használat
             bool fullscreen = trayFresh && !locked && tray.Bool("fullscreen");
+            // A kijelző (a Windows energiagazdálkodása vagy a „Képernyő ki” kapcsolta le): ilyenkor senki nem nézi a gépet,
+            // a teljes képernyős program (pl. távoli asztal) vagy egy friss bevitel ellenére sem „használatban”
+            var display = trayFresh ? tray.Str("display") ?? "unknown" : "unknown";
+            bool displayOff = display == "off";
             bool active = user != null && trayFresh && !locked;
             string Cut(string v) => v == null ? null : v.Length > 250 ? v.Substring(0, 250) : v;
             Publish($"{baseTopic}/session", new Dictionary<string, object>
@@ -645,7 +652,8 @@ namespace WinMqttMonitor
                 ["tray"] = trayFresh,
                 ["locked"] = user != null && locked,
                 ["idle_min"] = user != null ? Math.Floor(idleSec / 60) : 0,
-                ["in_use"] = user != null && !locked && (idleSec < 300 || fullscreen),
+                ["in_use"] = user != null && !locked && !displayOff && (idleSec < 300 || fullscreen),
+                ["display"] = display,
                 ["fullscreen"] = fullscreen,
                 ["fg_app"] = active ? Cut(tray.Str("fg_app")) ?? "–" : "–",
                 ["fg_process"] = active ? tray.Str("fg_process") : null,
