@@ -6,7 +6,7 @@
     <UseWindowsForms>true</UseWindowsForms>
     <AssemblyName>WinMqttMonitorTray</AssemblyName>
     <RootNamespace>WinMqttMonitor.Tray</RootNamespace>
-    <Version>0.1.4</Version>
+    <Version>0.1.5</Version>
     <AssemblyTitle>Home Assistant</AssemblyTitle>
     <ApplicationIcon>..\Shared\app.ico</ApplicationIcon>
     <Product>custom-windows-mqtt-monitor</Product>

@@ -11,6 +11,7 @@ if (Test-Path $out) { Remove-Item $out -Recurse -Force }
 New-Item -ItemType Directory $out | Out-Null
 Copy-Item (Join-Path $root 'src\WinMqttMonitor\bin\Release\*') $out -Include *.exe, *.dll, *.config
 Copy-Item (Join-Path $root 'src\WinMqttMonitor.Tray\bin\Release\*') $out -Include *.exe, *.config
-Copy-Item (Join-Path $root 'install.ps1'), (Join-Path $root 'uninstall.ps1'), (Join-Path $root 'install.cmd'), (Join-Path $root 'uninstall.cmd'), (Join-Path $root 'config.example.json') $out
+# Szkript nincs a csomagban: a telepítő maga a WinMqttMonitor.exe (dupla kattintás)
+Copy-Item (Join-Path $root 'config.example.json'), (Join-Path $root 'TELEPITES.txt') $out
 Write-Host "Kész: $out"
 Get-ChildItem $out | Select-Object Name, Length | Format-Table -AutoSize

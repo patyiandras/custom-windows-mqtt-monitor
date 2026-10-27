@@ -1,0 +1,18 @@
+Windows MQTT Monitor (Home Assistant) - telepítés
+==================================================
+
+Telepítés / frissítés:
+  Dupla kattintás a WinMqttMonitor.exe-re, majd a Windows jóváhagyás (UAC) után a telepítő
+  végigmegy, és az ablakban kiírja, mit csinált.
+
+  Első telepítéskor létrehozza a C:\ProgramData\WinMqttMonitor\config.json-t, és megnyitja
+  Jegyzettömbben: írd bele az MQTT-jelszót, mentsd el, és indítsd újra a WinMqttMonitor.exe-t.
+  A beállítást a frissítés nem bántja.
+
+Eltávolítás (parancssorból, ebből a mappából):
+  WinMqttMonitor.exe --uninstall           (a beállítás megmarad)
+  WinMqttMonitor.exe --uninstall --purge   (a beállítás és a napló is törlődik)
+
+Napló: C:\ProgramData\WinMqttMonitor\logs\monitor.log
+
+Forráskód és leírás: https://github.com/patyiandras/custom-windows-mqtt-monitor

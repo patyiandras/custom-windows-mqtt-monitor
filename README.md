@@ -64,34 +64,32 @@ ideje ezért nem a kernel-indulás (az csak attribútum), hanem a legutóbbi té
 
 1. Mosquitto add-on → *Configuration → Logins*: saját felhasználó a PC-nek (pl. `pc`).
 2. Fordítás (bármelyik gépen, ahol van .NET SDK): `.\build.ps1` → a `publish\` mappa a telepítőcsomag.
-3. A cél-PC-n a `publish\` mappában (vagy a repó gyökerében) **dupla kattintás az `install.cmd`-re**:
-   UAC-jóváhagyás után rendszergazdaként, a végrehajtási házirend megkerülésével futtatja az
-   `install.ps1`-et (a Windows alapból tiltja a .ps1-ek futtatását: *„running scripts is disabled
-   on this system”*). Kézzel, rendszergazdai PowerShellből ugyanez:
-   ```powershell
-   powershell -ExecutionPolicy Bypass -File .\install.ps1
-   ```
-   Ha a csomagot letöltötted (zip), a Windows SmartScreen „A Windows megvédte a számítógépet” ablakot
-   mutathat az `install.cmd`-nél (a fájl nincs digitálisan aláírva): *További információ → Futtatás
-   mindenképp*. Megelőzhető, ha kicsomagolás előtt a zip Tulajdonságainál bepipálod a *Tiltás feloldása*
-   jelölőt. A telepített fájlokról az install.ps1 leveszi ezt a jelölést.
-   Ha a mappa hálózati meghajtón van, a rendszergazdai ablak nem látja a meghajtó betűjelét —
-   ilyenkor másold a csomagot helyi mappába.
+3. A cél-PC-n a `publish\` mappában (vagy a kicsomagolt zipben) **dupla kattintás a `WinMqttMonitor.exe`-re**:
+   UAC-jóváhagyás után a program maga telepít (nincs külön szkript), és egy ablakban kiírja, mit csinált.
    Az első futás létrehozza a `C:\ProgramData\WinMqttMonitor\config.json`-t és megnyitja Jegyzettömbben:
-   írd bele az MQTT-jelszót (és ha kell, a gép nevét / `id`-jét), majd futtasd újra az `install.cmd`-t.
+   írd bele az MQTT-jelszót (és ha kell, a gép nevét / `id`-jét), majd indítsd újra a `WinMqttMonitor.exe`-t.
    A config.json-t csak a SYSTEM és a rendszergazdák olvashatják.
 
-Az install.ps1 ezen felül:
-- leállítja és törli a régi **„TCP Listener service”**-t, kilövi a `ShutdownDaemon`-t, és törli az
-  automatikus indítását (Run-kulcs, Indítópult-parancsikon; ütemezett feladatnál csak figyelmeztet);
-- regisztrálja a `WinMqttMonitor` szolgáltatást (automatikus indulás, hibánál 10/30/60 mp után újraindul);
-- a tálcás segédet minden bejelentkezéshez beállítja (HKLM\…\Run) és el is indítja; ha mégsem fut (nem indult el,
-  összeomlott), a szolgáltatás 5 mp-en belül elindítja a bejelentkezett felhasználó sessionjében (a saját, nem emelt
-  jogaival); a segéd esetleges hibái: `C:\ProgramData\WinMqttMonitor\ipc\tray-<session>.log`;
-- a régi SmartThings-végponthoz tűzfalszabályt nyit (privát hálózat, TCP 7268).
+   A telepítő korábban PowerShell-szkript volt (`install.cmd` → `install.ps1`); a Windows Defender gépi tanulásos
+   heurisztikája a letöltött csomagot `Trojan:Script/Sabsik.FL.A!ml`-nek jelölte (rejtett PowerShell
+   `-ExecutionPolicy Bypass` + `-Verb RunAs`, szolgáltatás- és Run-kulcs-módosítás — tipikus kártevő-minta).
+   Ezért a telepítés a programba került. Az exe nincs digitálisan aláírva, így a SmartScreen
+   („A Windows megvédte a számítógépet”) ettől még kérdezhet: *További információ → Futtatás mindenképp*.
 
-Frissítés: ugyanígy `install.cmd` (a configot nem bántja). Eltávolítás: `uninstall.cmd`
-(a HA-ból is törli az eszközt; `-Purge` a configot és a naplót is).
+A telepítő ezen felül:
+- leállítja és törli a régi **„TCP Listener service”**-t, kilövi a `ShutdownDaemon`-t, és törli az
+  automatikus indítását (Run-kulcs);
+- a binárisokat a `C:\Program Files\WinMqttMonitor` mappába másolja, és leveszi róluk az „internetről
+  származik” jelölést;
+- regisztrálja a `WinMqttMonitor` szolgáltatást (automatikus indulás, hibánál 10/30/60 mp után újraindul);
+- a tálcás segédet minden bejelentkezéshez beállítja (HKLM\…\Run); ha nem fut (nem indult el, összeomlott),
+  a szolgáltatás 5 mp-en belül elindítja a bejelentkezett felhasználó sessionjében (a saját, nem emelt
+  jogaival); a segéd esetleges hibái: `C:\ProgramData\WinMqttMonitor\ipc\tray-<session>.log`;
+- a régi SmartThings-végponthoz tűzfalszabályt nyit (privát/domain hálózat, TCP 7268).
+
+Frissítés: ugyanígy, dupla kattintás az új csomag `WinMqttMonitor.exe`-jére (a configot nem bántja).
+Eltávolítás a csomag mappájából: `WinMqttMonitor.exe --uninstall` (a HA-ból is törli az eszközt;
+`--purge`-dzsel a configot és a naplót is).
 
 Napló: `C:\ProgramData\WinMqttMonitor\logs\monitor.log` (a tálca-ikon menüjéből is megnyitható).
 
@@ -151,7 +149,7 @@ automation:
 A régi végpont (7268) az új szolgáltatásban tovább él, így a SmartThings „Computer” eszköz és a
 rutinjai az átállás alatt is működnek (a leállítás most már ugyanazzal a visszaszámlálóval megy).
 Ha a HA-s automatizmusok átkerültek a `switch.pc_bekapcsolva`-ra, a configban
-`"legacy_http": { "enabled": false }`, újra `install.ps1` (a tűzfalszabályt is leveszi), és a
+`"legacy_http": { "enabled": false }`, újra telepítés (a tűzfalszabályt is leveszi), és a
 SmartThings-eszköz törölhető.
 
 ## Biztonság
