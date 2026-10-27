@@ -21,7 +21,7 @@ namespace WinMqttMonitor
     /// </summary>
     public class Agent
     {
-        public const string Version = "0.1.3";
+        public const string Version = "0.1.4";
         public const string RepoUrl = "https://github.com/patyiandras/custom-windows-mqtt-monitor";
 
         readonly Config cfg;
@@ -435,6 +435,12 @@ namespace WinMqttMonitor
                 "json_attributes_template", "{{ {'session': value_json.session, 'tavoli': value_json.remote, 'talcas_seged': value_json.tray} | tojson }}"));
             Binary("hasznalatban", "Használatban", sess, "in_use", O("device_class", "occupancy"));
             Binary("zarolva", "Zárolva", sess, "locked", O("icon", "mdi:monitor-lock"));
+            if (cfg.Foreground)
+            {
+                Sensor("elotter", "Előtérben lévő program", sess, "fg_app", O("icon", "mdi:application-outline",
+                    "json_attributes_topic", sess, "json_attributes_template",
+                    "{{ {'folyamat': value_json.fg_process, 'ablakcim': value_json.fg_title, 'teljes_kepernyo': value_json.fullscreen} | tojson }}"));
+            }
             Sensor("tetlenseg", "Tétlenség", sess, "idle_min", With(meas, O("unit_of_measurement", "min", "device_class", "duration",
                 "suggested_display_precision", 0)));
 
@@ -626,6 +632,10 @@ namespace WinMqttMonitor
             if (user != null && !trayFresh) { EnsureTray(session); }
             bool locked = trayFresh && tray.Bool("locked");
             double idleSec = trayFresh ? tray.Num("idle_sec") : 0;
+            // Teljes képernyős app (film, játék, prezentáció) bevitel nélkül is használat
+            bool fullscreen = trayFresh && !locked && tray.Bool("fullscreen");
+            bool active = user != null && trayFresh && !locked;
+            string Cut(string v) => v == null ? null : v.Length > 250 ? v.Substring(0, 250) : v;
             Publish($"{baseTopic}/session", new Dictionary<string, object>
             {
                 ["user"] = user ?? "nincs bejelentkezve",
@@ -635,7 +645,11 @@ namespace WinMqttMonitor
                 ["tray"] = trayFresh,
                 ["locked"] = user != null && locked,
                 ["idle_min"] = user != null ? Math.Floor(idleSec / 60) : 0,
-                ["in_use"] = user != null && !locked && idleSec < 300,
+                ["in_use"] = user != null && !locked && (idleSec < 300 || fullscreen),
+                ["fullscreen"] = fullscreen,
+                ["fg_app"] = active ? Cut(tray.Str("fg_app")) ?? "–" : "–",
+                ["fg_process"] = active ? tray.Str("fg_process") : null,
+                ["fg_title"] = active && cfg.ForegroundTitle ? Cut(tray.Str("fg_title")) : null,
             });
         }
 

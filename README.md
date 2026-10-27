@@ -36,7 +36,8 @@ nyitni a felhasználónak, a segéd pedig nem lát minden rendszeradatot).
 | Akkumulátor, Töltés | csak laptopon |
 | `Lemez C:`, `Lemez D:`, … telítettség % (attr.: szabad/összes GB, címke, fájlrendszer) | minden belső meghajtó, 5 percenként; új/eltűnt meghajtó magától követi |
 | Bejelentkezett felhasználó (attr.: session, távoli-e, fut-e a segéd) | konzol, ha ott senki: aktív RDP-session |
-| **Használatban** (occupancy), **Zárolva**, Tétlenség (perc) | a segédtől; használatban = bejelentkezve, nincs zárolva, 5 percen belül volt bevitel |
+| **Használatban** (occupancy), **Zárolva**, Tétlenség (perc) | a segédtől; használatban = bejelentkezve, nincs zárolva, és 5 percen belül volt billentyűzet/egér-bevitel *vagy* teljes képernyős program fut (film, játék, prezentáció) |
+| **Előtérben lévő program** (attr.: folyamat, ablakcím, teljes képernyő) | a segédtől, váltáskor azonnal; a név a program fájlleírása (pl. „Google Chrome”), Store-os appoknál is a valódi app; zárolt gépnél „–” |
 | Memória top program (attr.: a 10 legtöbb memóriát használó program, név szerint összevonva) | percenként |
 | Windows-frissítések (attr.: címek), Újraindítás szükséges | a Windows saját utolsó ellenőrzéséből, 4 óránként (nem indít letöltést) |
 | Bekapcsolás ideje (attr.: mód — hidegindítás / gyorsindítás / hibernálásból / felébredés alvásból; kernel-indulás), Windows-verzió, Monitor verzió | a bekapcsolás a Rendszer-eseménynaplóból (Kernel-Boot 27, Kernel-Power 107) jön, így gyorsindításnál is a valódi bekapcsolást mutatja |
@@ -111,6 +112,7 @@ Napló: `C:\ProgramData\WinMqttMonitor\logs\monitor.log` (a tálca-ikon menüjé
 | `services.restart` | `true` | újraindító gomb a figyelt szolgáltatásokhoz |
 | `legacy_http.enabled`, `port` | `true`, `7268` | a SmartThings „PC Control” driver régi végpontja (`/?Ping`, `/?ST.PCPower.Shutdown`) |
 | `sensors.cpu_temp` / `gpu` / `windows_update` | `true` | kikapcsolhatók |
+| `sensors.foreground` / `foreground_title` | `true` | előtérben lévő program; az ablakcím (pl. megnyitott dokumentum, weboldal címe) attribútumként — `false`-szal nem kerül a HA-ba |
 
 Módosítás után: `Restart-Service WinMqttMonitor`.
 

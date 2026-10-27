@@ -22,6 +22,8 @@ namespace WinMqttMonitor.Tray
         readonly Timer timer = new Timer { Interval = 250 };
         bool locked;
         DateTime nextReport = DateTime.MinValue;
+        Foreground.Info foreground = new Foreground.Info();
+        DateTime nextForeground = DateTime.MinValue;
         string shownDeadline;
 
         public TrayContext()
@@ -53,11 +55,22 @@ namespace WinMqttMonitor.Tray
             try
             {
                 if (!Directory.Exists(Ipc.Dir)) { return; } // a szolgáltatás még nem hozta létre
+                CheckForeground();
                 if (DateTime.UtcNow >= nextReport) { Report(); }
                 ShowPending();
                 RunCommands();
             }
             catch (Exception) { } // a segéd ne álljon le egy átmeneti fájlhiba miatt
+        }
+
+        /// <summary>Másodpercenként: ha más program került előtérbe (vagy teljes képernyőre), azonnal jelentjük.</summary>
+        void CheckForeground()
+        {
+            if (DateTime.UtcNow < nextForeground) { return; }
+            nextForeground = DateTime.UtcNow.AddSeconds(1);
+            var fg = Foreground.Get();
+            if (fg.Key != foreground.Key) { nextReport = DateTime.MinValue; }
+            foreground = fg;
         }
 
         void Report()
@@ -70,6 +83,10 @@ namespace WinMqttMonitor.Tray
                 ["user"] = Environment.UserName,
                 ["locked"] = locked,
                 ["idle_sec"] = (int)IdleTime().TotalSeconds,
+                ["fg_app"] = foreground.App,
+                ["fg_process"] = foreground.Process,
+                ["fg_title"] = foreground.Title,
+                ["fullscreen"] = foreground.Fullscreen,
             });
         }
 

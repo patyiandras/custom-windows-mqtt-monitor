@@ -5,7 +5,7 @@
     <LangVersion>latest</LangVersion>
     <AssemblyName>WinMqttMonitor</AssemblyName>
     <RootNamespace>WinMqttMonitor</RootNamespace>
-    <Version>0.1.3</Version>
+    <Version>0.1.4</Version>
     <AssemblyTitle>Windows MQTT Monitor (Home Assistant)</AssemblyTitle>
     <ApplicationIcon>..\Shared\app.ico</ApplicationIcon>
     <Product>custom-windows-mqtt-monitor</Product>

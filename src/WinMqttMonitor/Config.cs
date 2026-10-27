@@ -47,6 +47,8 @@ namespace WinMqttMonitor
         public bool CpuTemp = true;
         public bool Gpu = true;
         public bool WindowsUpdate = true;
+        public bool Foreground = true;
+        public bool ForegroundTitle = true; // az ablakcím (pl. megnyitott dokumentum neve) attribútumként
 
         public static readonly string FilePath = Path.Combine(Ipc.DataDir, "config.json");
 
@@ -107,6 +109,8 @@ namespace WinMqttMonitor
             c.CpuTemp = se.Bool("cpu_temp", c.CpuTemp);
             c.Gpu = se.Bool("gpu", c.Gpu);
             c.WindowsUpdate = se.Bool("windows_update", c.WindowsUpdate);
+            c.Foreground = se.Bool("foreground", c.Foreground);
+            c.ForegroundTitle = se.Bool("foreground_title", c.ForegroundTitle);
             return c;
         }
 
