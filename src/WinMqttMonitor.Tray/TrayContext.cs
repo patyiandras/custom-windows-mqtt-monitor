@@ -30,8 +30,8 @@ namespace WinMqttMonitor.Tray
             menu.Items.Add("Napló megnyitása", null, (s, e) => OpenLogs());
             icon = new NotifyIcon
             {
-                Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath) ?? SystemIcons.Application,
-                Text = "Home Assistant – Windows MQTT Monitor",
+                Icon = AppIcon(),
+                Text = "Home Assistant – a gép kapcsolata az okosotthonnal",
                 ContextMenuStrip = menu,
                 Visible = true,
             };
@@ -117,10 +117,23 @@ namespace WinMqttMonitor.Tray
                         SendMessage(countdown.Handle, WM_SYSCOMMAND, (IntPtr)SC_MONITORPOWER, (IntPtr)2);
                         break;
                     case "notify":
-                        icon.ShowBalloonTip(15000, cmd.Str("title", "Home Assistant"), cmd.Str("text", ""), ToolTipIcon.Info);
+                        icon.ShowBalloonTip(15000, cmd.Str("title", "🏠 Üzenet otthonról"), cmd.Str("text", ""), ToolTipIcon.None);
                         break;
                 }
             }
+        }
+
+        /// <summary>A beágyazott ikon a tálca kis ikonméretében (DPI szerint 16/20/24/32 px).</summary>
+        static Icon AppIcon()
+        {
+            try
+            {
+                using (var s = typeof(TrayContext).Assembly.GetManifestResourceStream("app.ico"))
+                {
+                    return new Icon(s, SystemInformation.SmallIconSize);
+                }
+            }
+            catch (Exception) { return SystemIcons.Application; }
         }
 
         static void OpenLogs()

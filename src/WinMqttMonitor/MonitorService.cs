@@ -22,7 +22,7 @@ namespace WinMqttMonitor
         protected override void OnStart(string[] args)
         {
             var cfg = Config.Load();
-            agent = new Agent(cfg);
+            agent = new Agent(cfg) { LaunchTray = true };
             thread = new Thread(() =>
             {
                 try { agent.Run(); }

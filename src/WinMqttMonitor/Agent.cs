@@ -21,7 +21,7 @@ namespace WinMqttMonitor
     /// </summary>
     public class Agent
     {
-        public const string Version = "0.1.2";
+        public const string Version = "0.1.3";
         public const string RepoUrl = "https://github.com/patyiandras/custom-windows-mqtt-monitor";
 
         readonly Config cfg;
@@ -593,12 +593,37 @@ namespace WinMqttMonitor
             Publish($"{baseTopic}/services", d);
         }
 
+        /// <summary>A session tálcás segédjének utolsó jelentése, ha friss (a segéd 10 mp-enként ír); egyébként null.</summary>
+        static Dictionary<string, object> FreshTray(int session)
+        {
+            var tray = session >= 0 ? Ipc.ReadJson(Ipc.SessionFile(session)) : null;
+            return tray != null && DateTime.TryParse(tray.Str("time"), null, System.Globalization.DateTimeStyles.RoundtripKind, out var t)
+                   && (DateTime.UtcNow - t.ToUniversalTime()).TotalSeconds < 60 ? tray : null;
+        }
+
+        /// <summary>Szolgáltatásként igaz: ilyenkor a hiányzó tálcás segédet a felhasználó sessionjében elindítja.</summary>
+        public bool LaunchTray;
+        readonly Dictionary<int, DateTime> trayLaunched = new Dictionary<int, DateTime>();
+
+        void EnsureTray(int session)
+        {
+            if (!LaunchTray || session <= 0) { return; }
+            if (trayLaunched.TryGetValue(session, out var last) && (DateTime.UtcNow - last).TotalMinutes < 2) { return; }
+            trayLaunched[session] = DateTime.UtcNow;
+            try
+            {
+                TrayLauncher.Launch(session);
+                Log.Info($"Tálcás segéd elindítva a(z) {session}. sessionben");
+            }
+            catch (Exception ex) { Log.Warn($"A tálcás segéd nem indítható a(z) {session}. sessionben: {ex.Message}"); }
+        }
+
         void CollectSession()
         {
             var (session, user, remote) = SystemInfo.ActiveUser();
-            var tray = session >= 0 ? Ipc.ReadJson(Ipc.SessionFile(session)) : null;
-            bool trayFresh = tray != null && DateTime.TryParse(tray.Str("time"), null, System.Globalization.DateTimeStyles.RoundtripKind, out var t)
-                             && (DateTime.UtcNow - t.ToUniversalTime()).TotalSeconds < 60;
+            var tray = FreshTray(session);
+            bool trayFresh = tray != null;
+            if (user != null && !trayFresh) { EnsureTray(session); }
             bool locked = trayFresh && tray.Bool("locked");
             double idleSec = trayFresh ? tray.Num("idle_sec") : 0;
             Publish($"{baseTopic}/session", new Dictionary<string, object>
@@ -687,7 +712,11 @@ namespace WinMqttMonitor
                     return;
                 case "notify":
                     if (string.IsNullOrWhiteSpace(payload)) { return; }
-                    TrayCommand("Üzenet", new Dictionary<string, object> { ["action"] = "notify", ["title"] = "Home Assistant", ["text"] = payload });
+                    // „Cím | szöveg” formában saját cím adható; egyébként az alapcím
+                    var bar = payload.IndexOf('|');
+                    var title = bar > 0 ? payload.Substring(0, bar).Trim() : "🏠 Üzenet otthonról";
+                    var text = bar > 0 ? payload.Substring(bar + 1).Trim() : payload.Trim();
+                    TrayCommand("Üzenet", new Dictionary<string, object> { ["action"] = "notify", ["title"] = title, ["text"] = text });
                     return;
                 case "refresh":
                     lastPayload.Clear();
@@ -725,9 +754,13 @@ namespace WinMqttMonitor
         void TrayCommand(string label, Dictionary<string, object> cmd)
         {
             var (session, user, _) = SystemInfo.ActiveUser();
-            var tray = session >= 0 ? Ipc.ReadJson(Ipc.SessionFile(session)) : null;
             if (user == null) { Report(label, false, "nincs bejelentkezett felhasználó"); return; }
-            if (tray == null) { Report(label, false, "nem fut a tálcás segéd a felhasználó sessionjében"); return; }
+            if (FreshTray(session) == null)
+            {
+                EnsureTray(session);
+                Report(label, false, "nem fut a tálcás segéd a felhasználó sessionjében (indítás folyamatban, próbáld újra)");
+                return;
+            }
             cmd["session"] = session;
             cmd["time"] = Iso(DateTime.UtcNow);
             Ipc.WriteJson(Path.Combine(Ipc.Dir, $"cmd-{DateTime.UtcNow.Ticks}.json"), cmd);

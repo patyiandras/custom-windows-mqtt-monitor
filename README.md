@@ -43,7 +43,7 @@ nyitni a felhasználónak, a segéd pedig nem lát minden rendszeradatot).
 | MAC-cím (Wake-on-LAN) | kikapcsolt gépnél is megmarad — a HA ebből ébreszt |
 | Utolsó parancs, Függő művelet (attr.: határidő) | audit + a futó visszaszámlálás |
 | Gombok: **Leállítás**, **Újraindítás**, **Alvó mód**, **Hibernálás**, **Leállítás megszakítása**, **Zárolás**, **Képernyő ki**, Adatok frissítése | az alvó mód / hibernálás csak ha a gép támogatja |
-| **Üzenet a képernyőre** (szöveg) | Windows-értesítésként jelenik meg a felhasználónak |
+| **Üzenet a képernyőre** (szöveg) | Windows-értesítésként jelenik meg a felhasználónak („Home Assistant” fejléccel); `Cím \| szöveg` formában saját cím adható, egyébként „🏠 Üzenet otthonról” |
 | `Szolgáltatás <név>` fut-e + `<név> újraindítása` | a configban felsorolt Windows-szolgáltatásokhoz |
 
 ### Leállítás, újraindítás, alvás
@@ -84,7 +84,9 @@ Az install.ps1 ezen felül:
 - leállítja és törli a régi **„TCP Listener service”**-t, kilövi a `ShutdownDaemon`-t, és törli az
   automatikus indítását (Run-kulcs, Indítópult-parancsikon; ütemezett feladatnál csak figyelmeztet);
 - regisztrálja a `WinMqttMonitor` szolgáltatást (automatikus indulás, hibánál 10/30/60 mp után újraindul);
-- a tálcás segédet minden bejelentkezéshez beállítja (HKLM\…\Run) és el is indítja;
+- a tálcás segédet minden bejelentkezéshez beállítja (HKLM\…\Run) és el is indítja; ha mégsem fut (nem indult el,
+  összeomlott), a szolgáltatás 5 mp-en belül elindítja a bejelentkezett felhasználó sessionjében (a saját, nem emelt
+  jogaival); a segéd esetleges hibái: `C:\ProgramData\WinMqttMonitor\ipc	ray-<session>.log`;
 - a régi SmartThings-végponthoz tűzfalszabályt nyit (privát hálózat, TCP 7268).
 
 Frissítés: ugyanígy `install.cmd` (a configot nem bántja). Eltávolítás: `uninstall.cmd`
