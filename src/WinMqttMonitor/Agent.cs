@@ -21,7 +21,7 @@ namespace WinMqttMonitor
     /// </summary>
     public class Agent
     {
-        public const string Version = "0.1.8";
+        public const string Version = "0.1.9";
         public const string RepoUrl = "https://github.com/patyiandras/custom-windows-mqtt-monitor";
 
         readonly Config cfg;
@@ -398,7 +398,7 @@ namespace WinMqttMonitor
             Sensor("memoria", "Memória-használat", fast, "mem_usage", With(meas, O("unit_of_measurement", "%", "icon", "mdi:memory",
                 "json_attributes_topic", fast,
                 "json_attributes_template", "{{ {'hasznalt_gb': value_json.mem_used_gb, 'osszes_gb': value_json.mem_total_gb} | tojson }}")));
-            Sensor("memoria_veglegesitett", "Véglegesített memória", fast, "commit_usage", With(meas, O("unit_of_measurement", "%",
+            Sensor("memoria_veglegesitett", "Lefoglalt memória (RAM + lapozófájl)", fast, "commit_usage", With(meas, O("unit_of_measurement", "%",
                 "icon", "mdi:memory-arrow-down", "json_attributes_topic", fast,
                 "json_attributes_template", "{{ {'hasznalt_gb': value_json.commit_used_gb, 'korlat_gb': value_json.commit_limit_gb} | tojson }}")));
             if (sys.HasGpu)

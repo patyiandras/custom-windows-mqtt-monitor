@@ -29,7 +29,7 @@ nyitni a felhasználónak, a segéd pedig nem lát minden rendszeradatot).
 | Entitás | Megjegyzés |
 |---|---|
 | **Bekapcsolva** (kapcsoló) | be = a monitor online; **kikapcsolás = leállítás visszaszámlálóval**. Bekapcsolni a HA tud Wake-on-LAN-nal (lásd lent). Alváskor és leállításkor azonnal „ki”, áramszünet/fagyás esetén a keepalive (45 mp) után. |
-| CPU-terhelés, Memória-használat (attr.: GB), Véglegesített memória (commit) | 30 mp-enként |
+| CPU-terhelés, Memória-használat (attr.: GB), Lefoglalt memória (RAM + lapozófájl; a Feladatkezelő „Lefoglalt” értéke, angolul commit charge) | 30 mp-enként |
 | CPU hőmérséklet (ACPI) | csak ha a gép ACPI-hőzónát ad (sok asztali alaplap nem; ilyenkor nem jelenik meg) |
 | GPU hőmérséklet / terhelés / memória | csak NVIDIA-kártyánál (`nvidia-smi`) |
 | Hálózat le / fel (kB/s), IP-cím (attr.: MAC, csatoló, link-sebesség), WiFi-jel | WiFi csak ha azon van |
