@@ -24,6 +24,10 @@ namespace WinMqttMonitor.Tray
         DateTime nextReport = DateTime.MinValue;
         Foreground.Info foreground = new Foreground.Info();
         string reportedDisplay;
+        // A Windows a tétlenséget az utolsó bevitel óta méri, és ebbe az alvás / hibernálás / gyorsindítás ideje is
+        // beleszámít (ébredés után napokat mutatna). Ezért legfeljebb az „ébrenlét” kezdete óta számolunk: a segéd
+        // indulása, ébredés, feloldás és a kijelző bekapcsolása ezt a kezdőpontot előre hozza.
+        DateTime idleFloor = DateTime.UtcNow;
         DateTime nextForeground = DateTime.MinValue;
         string shownDeadline;
 
@@ -40,12 +44,23 @@ namespace WinMqttMonitor.Tray
             };
             countdown.CancelRequested += () => Ipc.DeleteSafe(Ipc.PendingFile);
             SystemEvents.SessionSwitch += OnSessionSwitch;
+            SystemEvents.PowerModeChanged += OnPowerModeChanged;
             timer.Tick += (s, e) => Tick();
             timer.Start();
         }
 
+        void OnPowerModeChanged(object sender, PowerModeChangedEventArgs e)
+        {
+            if (e.Mode == PowerModes.Resume) { idleFloor = DateTime.UtcNow; nextReport = DateTime.MinValue; }
+        }
+
         void OnSessionSwitch(object sender, SessionSwitchEventArgs e)
         {
+            if (e.Reason == SessionSwitchReason.SessionUnlock || e.Reason == SessionSwitchReason.SessionLogon
+                || e.Reason == SessionSwitchReason.ConsoleConnect || e.Reason == SessionSwitchReason.RemoteConnect)
+            {
+                idleFloor = DateTime.UtcNow;
+            }
             if (e.Reason == SessionSwitchReason.SessionLock) { locked = true; }
             else if (e.Reason == SessionSwitchReason.SessionUnlock) { locked = false; }
             nextReport = DateTime.MinValue; // azonnal jelentjük
@@ -71,6 +86,7 @@ namespace WinMqttMonitor.Tray
             nextForeground = DateTime.UtcNow.AddSeconds(1);
             var fg = Foreground.Get();
             if (fg.Key != foreground.Key || countdown.DisplayState != reportedDisplay) { nextReport = DateTime.MinValue; }
+            if (countdown.DisplayState == "on" && reportedDisplay == "off") { idleFloor = DateTime.UtcNow; }
             foreground = fg;
         }
 
@@ -82,8 +98,9 @@ namespace WinMqttMonitor.Tray
                 ["time"] = DateTime.UtcNow.ToString("o"),
                 ["session"] = sessionId,
                 ["user"] = Environment.UserName,
-                ["locked"] = locked,
-                ["idle_sec"] = (int)IdleTime().TotalSeconds,
+                // Zárolt gépen indult segéd a zárolás eseményét nem kapta meg: ilyenkor a zárolási képernyő (LockApp) van elöl
+                ["locked"] = locked || string.Equals(foreground.Process, "LockApp", StringComparison.OrdinalIgnoreCase),
+                ["idle_sec"] = (int)Math.Min(IdleTime().TotalSeconds, Math.Max(0, (DateTime.UtcNow - idleFloor).TotalSeconds)),
                 ["fg_app"] = foreground.App,
                 ["fg_process"] = foreground.Process,
                 ["fg_title"] = foreground.Title,
@@ -168,6 +185,7 @@ namespace WinMqttMonitor.Tray
             if (disposing)
             {
                 SystemEvents.SessionSwitch -= OnSessionSwitch;
+                SystemEvents.PowerModeChanged -= OnPowerModeChanged;
                 timer.Dispose();
                 icon.Visible = false;
                 icon.Dispose();

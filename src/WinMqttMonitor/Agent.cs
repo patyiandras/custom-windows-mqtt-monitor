@@ -21,7 +21,7 @@ namespace WinMqttMonitor
     /// </summary>
     public class Agent
     {
-        public const string Version = "0.1.9";
+        public const string Version = "0.1.10";
         public const string RepoUrl = "https://github.com/patyiandras/custom-windows-mqtt-monitor";
 
         readonly Config cfg;
