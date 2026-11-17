@@ -21,7 +21,7 @@ namespace WinMqttMonitor
     /// </summary>
     public class Agent
     {
-        public const string Version = "0.1.11";
+        public const string Version = "0.1.12";
         public const string RepoUrl = "https://github.com/patyiandras/custom-windows-mqtt-monitor";
 
         readonly Config cfg;
@@ -394,7 +394,7 @@ namespace WinMqttMonitor
             {
                 Sensor("cpu_homerseklet", "CPU hőmérséklet", fast, "cpu_temp", With(meas, O("unit_of_measurement", "°C",
                     "device_class", "temperature", "suggested_display_precision", 1, "json_attributes_topic", fast,
-                    "json_attributes_template", "{{ {'szenzor': value_json.cpu_temp_source, 'teljesitmeny_w': value_json.cpu_power} | tojson }}")));
+                    "json_attributes_template", "{{ {'szenzor': value_json.get('cpu_temp_source'), 'teljesitmeny_w': value_json.get('cpu_power')} | tojson }}")));
             }
             Sensor("memoria", "Memória-használat", fast, "mem_usage", With(meas, O("unit_of_measurement", "%", "icon", "mdi:memory",
                 "json_attributes_topic", fast,
@@ -421,7 +421,7 @@ namespace WinMqttMonitor
             if (sys.HasWifi)
             {
                 Sensor("wifi_jel", "WiFi-jel", fast, "wifi_signal", With(With(meas, diag), O("unit_of_measurement", "%", "icon", "mdi:wifi",
-                    "json_attributes_topic", fast, "json_attributes_template", "{{ {'ssid': value_json.wifi_ssid} | tojson }}")));
+                    "json_attributes_topic", fast, "json_attributes_template", "{{ {'ssid': value_json.get('wifi_ssid')} | tojson }}")));
             }
             if (sys.HasBattery)
             {
