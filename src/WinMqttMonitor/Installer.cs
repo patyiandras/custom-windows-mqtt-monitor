@@ -24,7 +24,13 @@ namespace WinMqttMonitor
         static readonly string InstallDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "WinMqttMonitor");
         const string RunKey = @"SOFTWARE\Microsoft\Windows\CurrentVersion\Run";
         const string FirewallRule = "WinMqttMonitor - SmartThings PC Control";
-        static readonly string[] Files = { "WinMqttMonitor.exe", "WinMqttMonitor.exe.config", "WinMqttMonitorTray.exe", "WinMqttMonitorTray.exe.config", "MQTTnet.dll" };
+        static readonly string[] Required = { "WinMqttMonitor.exe", "WinMqttMonitor.exe.config", "WinMqttMonitorTray.exe", "WinMqttMonitorTray.exe.config", "MQTTnet.dll", "LibreHardwareMonitorLib.dll" };
+
+        /// <summary>A csomag összes programfájlja (exe, dll, config) — a LibreHardwareMonitor függőségei is.</summary>
+        static string[] PackageFiles(string dir) => Directory.GetFiles(dir)
+            .Where(f => f.EndsWith(".exe", StringComparison.OrdinalIgnoreCase) || f.EndsWith(".dll", StringComparison.OrdinalIgnoreCase)
+                        || f.EndsWith(".exe.config", StringComparison.OrdinalIgnoreCase))
+            .Select(Path.GetFileName).ToArray();
 
         public static bool IsAdmin() => new WindowsPrincipal(WindowsIdentity.GetCurrent()).IsInRole(WindowsBuiltInRole.Administrator);
 
@@ -101,15 +107,15 @@ namespace WinMqttMonitor
             if (!string.Equals(Path.GetFullPath(src).TrimEnd('\\'), InstallDir, StringComparison.OrdinalIgnoreCase))
             {
                 Directory.CreateDirectory(InstallDir);
-                foreach (var f in Files)
+                foreach (var f in Required)
                 {
-                    var from = Path.Combine(src, f);
-                    if (!File.Exists(from)) { return Fail($"Hiányzik a csomagból: {f}"); }
-                    CopyWithRetry(from, Path.Combine(InstallDir, f));
+                    if (!File.Exists(Path.Combine(src, f))) { return Fail($"Hiányzik a csomagból: {f}"); }
                 }
+                foreach (var f in PackageFiles(src)) { CopyWithRetry(Path.Combine(src, f), Path.Combine(InstallDir, f)); }
             }
             // A letöltött csomag „internetről származik” jelölése (Zone.Identifier) ne kerüljön a telepített fájlokra
-            foreach (var f in Files) { DeleteFile(Path.Combine(InstallDir, f) + ":Zone.Identifier"); }
+            foreach (var f in PackageFiles(InstallDir)) { DeleteFile(Path.Combine(InstallDir, f) + ":Zone.Identifier"); }
+            OfferPawnIO();
             var exe = Path.Combine(InstallDir, "WinMqttMonitor.exe");
 
             // --- Szolgáltatás ---
@@ -156,12 +162,43 @@ namespace WinMqttMonitor
             using (var key = Registry.LocalMachine.OpenSubKey(RunKey, true)) { key?.DeleteValue("WinMqttMonitorTray", false); }
             Run("netsh.exe", $"advfirewall firewall delete rule name=\"{FirewallRule}\"", quiet: true);
             // A futó exe saját magát nem tudja törölni: ha a telepített példányból fut, a mappa a következő indításkor marad
-            foreach (var f in Files) { try { File.Delete(Path.Combine(InstallDir, f)); } catch (Exception) { } }
+            if (Directory.Exists(InstallDir))
+            {
+                foreach (var f in PackageFiles(InstallDir)) { try { File.Delete(Path.Combine(InstallDir, f)); } catch (Exception) { } }
+            }
             try { Directory.Delete(InstallDir); } catch (Exception) { }
             if (purge) { try { Directory.Delete(Ipc.DataDir, true); } catch (Exception) { } }
             Say("Eltávolítva.");
             Pause();
             return 0;
+        }
+
+        /// <summary>
+        /// A CPU saját hőszenzorát csak kernel-meghajtóval lehet olvasni; a LibreHardwareMonitor ehhez a PawnIO-t
+        /// használja (aláírt, nyílt forrású: pawnio.eu). Ha nincs fent, a telepítő felajánlja winget-tel.
+        /// </summary>
+        static void OfferPawnIO()
+        {
+            if (DriverExists("PawnIO")) { Say("PawnIO meghajtó: telepítve (CPU-hőmérséklet elérhető)"); return; }
+            Console.WriteLine();
+            Console.WriteLine("A CPU-hőmérséklethez a PawnIO meghajtó kell (aláírt, nyílt forrású: https://pawnio.eu).");
+            Console.Write("Telepítsem most (winget)? [I/n] ");
+            var answer = Console.IsInputRedirected ? "n" : (Console.ReadLine() ?? "").Trim().ToLowerInvariant();
+            if (answer != "" && answer != "i" && answer != "igen" && answer != "y")
+            {
+                Say("PawnIO kihagyva — a CPU-hőmérséklet nem lesz elérhető (később: winget install namazso.PawnIO)");
+                return;
+            }
+            try
+            {
+                var psi = new ProcessStartInfo("winget", "install --id namazso.PawnIO -e --accept-source-agreements --accept-package-agreements")
+                {
+                    UseShellExecute = false,
+                };
+                using (var p = Process.Start(psi)) { p.WaitForExit(); }
+                Say(DriverExists("PawnIO") ? "PawnIO telepítve" : "A PawnIO telepítése nem sikerült — kézzel: https://pawnio.eu");
+            }
+            catch (Exception ex) { Say("A winget nem indult (" + ex.Message + ") — a PawnIO kézzel telepíthető: https://pawnio.eu"); }
         }
 
         static void ProtectConfig()
@@ -173,6 +210,9 @@ namespace WinMqttMonitor
             acl.AddAccessRule(new FileSystemAccessRule(new SecurityIdentifier(WellKnownSidType.BuiltinAdministratorsSid, null), FileSystemRights.FullControl, AccessControlType.Allow));
             File.SetAccessControl(Config.FilePath, acl);
         }
+
+        /// <summary>Kernel-meghajtó (a GetServices() ezeket nem listázza, csak a GetDevices()).</summary>
+        static bool DriverExists(string name) => ServiceController.GetDevices().Any(s => s.ServiceName.Equals(name, StringComparison.OrdinalIgnoreCase));
 
         static bool ServiceExists(string name) => ServiceController.GetServices().Any(s => s.ServiceName.Equals(name, StringComparison.OrdinalIgnoreCase));
 

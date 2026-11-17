@@ -20,6 +20,7 @@ namespace WinMqttMonitor
         public string CpuName, OsName, OsVersion, Manufacturer, Model, Serial;
         public bool HasCpuTemp, HasGpu, HasBattery, HasWifi;
         string nvidiaSmi;
+        HardwareSensors hw;
 
         public SystemInfo(Config cfg)
         {
@@ -55,7 +56,14 @@ namespace WinMqttMonitor
             }
             catch (Exception ex) { Log.Warn("WMI Win32_ComputerSystem: " + ex.Message); }
 
-            HasCpuTemp = cfg.CpuTemp && CpuTemp() != null;
+            if (cfg.CpuTemp || cfg.Gpu)
+            {
+                hw = new HardwareSensors();
+                hw.Read(); // az első mérés után lesz minden szenzornak értéke
+            }
+            var hwData = hw?.Read() ?? new Dictionary<string, object>();
+            HasCpuTemp = cfg.CpuTemp && (hwData.ContainsKey("cpu_temp") || CpuTemp() != null);
+            if (cfg.CpuTemp && !HasCpuTemp) { Log.Warn("Nincs CPU-hőmérséklet: a processzor szenzorához a PawnIO meghajtó kell (a telepítő felajánlja)"); }
             if (cfg.Gpu)
             {
                 nvidiaSmi = new[]
@@ -63,7 +71,7 @@ namespace WinMqttMonitor
                     Path.Combine(Environment.SystemDirectory, "nvidia-smi.exe"),
                     Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), @"NVIDIA Corporation\NVSMI\nvidia-smi.exe"),
                 }.FirstOrDefault(File.Exists);
-                HasGpu = nvidiaSmi != null && Gpu() != null;
+                HasGpu = (nvidiaSmi != null && Gpu() != null) || hwData.ContainsKey("gpu_temp");
             }
             HasBattery = Native.GetSystemPowerStatus(out var ps) && ps.BatteryFlag != 128 && ps.BatteryFlag != 255;
             HasWifi = PrimaryInterface()?.NetworkInterfaceType == NetworkInterfaceType.Wireless80211;
@@ -111,6 +119,27 @@ namespace WinMqttMonitor
                 }
             }
             catch (Exception) { return null; }
+        }
+
+        /// <summary>
+        /// Hőmérsékletek egy körben: CPU (LibreHardwareMonitor, ennek hiányában ACPI), GPU (nvidia-smi, ennek
+        /// hiányában LibreHardwareMonitor — AMD/Intel kártyánál is).
+        /// </summary>
+        public Dictionary<string, object> Temperatures()
+        {
+            var d = hw?.Read() ?? new Dictionary<string, object>();
+            if (HasCpuTemp && !d.ContainsKey("cpu_temp"))
+            {
+                d["cpu_temp"] = CpuTemp();
+                d["cpu_temp_source"] = "ACPI";
+            }
+            if (!HasCpuTemp) { d.Remove("cpu_temp"); d.Remove("cpu_temp_source"); d.Remove("cpu_power"); }
+            if (nvidiaSmi != null && Gpu() is Dictionary<string, object> nv)
+            {
+                foreach (var kv in nv) { d[kv.Key] = kv.Value; }
+            }
+            if (!HasGpu) { foreach (var k in d.Keys.Where(k => k.StartsWith("gpu_")).ToList()) { d.Remove(k); } }
+            return d;
         }
 
         /// <summary>NVIDIA GPU nvidia-smi-vel (ha van). Más gyártóhoz nincs illesztőfüggetlen, rendszergazdai mód.</summary>

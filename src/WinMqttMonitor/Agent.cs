@@ -21,7 +21,7 @@ namespace WinMqttMonitor
     /// </summary>
     public class Agent
     {
-        public const string Version = "0.1.10";
+        public const string Version = "0.1.11";
         public const string RepoUrl = "https://github.com/patyiandras/custom-windows-mqtt-monitor";
 
         readonly Config cfg;
@@ -392,8 +392,9 @@ namespace WinMqttMonitor
             Sensor("cpu_terheles", "CPU-terhelés", fast, "cpu_usage", With(meas, O("unit_of_measurement", "%", "icon", "mdi:cpu-64-bit")));
             if (sys.HasCpuTemp)
             {
-                Sensor("cpu_homerseklet", "CPU hőmérséklet (ACPI)", fast, "cpu_temp", With(meas, O("unit_of_measurement", "°C",
-                    "device_class", "temperature", "suggested_display_precision", 1)));
+                Sensor("cpu_homerseklet", "CPU hőmérséklet", fast, "cpu_temp", With(meas, O("unit_of_measurement", "°C",
+                    "device_class", "temperature", "suggested_display_precision", 1, "json_attributes_topic", fast,
+                    "json_attributes_template", "{{ {'szenzor': value_json.cpu_temp_source, 'teljesitmeny_w': value_json.cpu_power} | tojson }}")));
             }
             Sensor("memoria", "Memória-használat", fast, "mem_usage", With(meas, O("unit_of_measurement", "%", "icon", "mdi:memory",
                 "json_attributes_topic", fast,
@@ -527,11 +528,10 @@ namespace WinMqttMonitor
         void CollectFast()
         {
             var d = new Dictionary<string, object> { ["cpu_usage"] = sys.CpuUsage() ?? 0 };
-            if (sys.HasCpuTemp) { d["cpu_temp"] = sys.CpuTemp(); }
+            foreach (var kv in sys.Temperatures()) { d[kv.Key] = kv.Value; }
             foreach (var kv in sys.Memory()) { d[kv.Key] = kv.Value; }
             foreach (var kv in sys.Network()) { d[kv.Key] = kv.Value; }
             if (!d.ContainsKey("net_rx")) { d["net_rx"] = 0; d["net_tx"] = 0; }
-            if (sys.HasGpu) { foreach (var kv in sys.Gpu() ?? new Dictionary<string, object>()) { d[kv.Key] = kv.Value; } }
             foreach (var kv in sys.Battery()) { d[kv.Key] = kv.Value; }
             Publish($"{baseTopic}/system", d);
         }

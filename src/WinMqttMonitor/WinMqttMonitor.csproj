@@ -5,16 +5,21 @@
     <LangVersion>latest</LangVersion>
     <AssemblyName>WinMqttMonitor</AssemblyName>
     <RootNamespace>WinMqttMonitor</RootNamespace>
-    <Version>0.1.10</Version>
+    <Version>0.1.11</Version>
     <AssemblyTitle>Windows MQTT Monitor (Home Assistant)</AssemblyTitle>
     <ApplicationIcon>..\Shared\app.ico</ApplicationIcon>
     <Product>custom-windows-mqtt-monitor</Product>
     <Description>Windows PC → Home Assistant (MQTT discovery) monitor és vezérlő szolgáltatás</Description>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <!-- A LibreHardwareMonitorLib csak runtimes/win-x64 alatt szállít .NET Framework-ös dll-t -->
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <PlatformTarget>x64</PlatformTarget>
+    <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="MQTTnet" Version="4.3.7.1207" />
+    <PackageReference Include="LibreHardwareMonitorLib" Version="0.9.6" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="Microsoft.CSharp" />

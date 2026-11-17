@@ -30,8 +30,8 @@ nyitni a felhasználónak, a segéd pedig nem lát minden rendszeradatot).
 |---|---|
 | **Bekapcsolva** (kapcsoló) | be = a monitor online; **kikapcsolás = leállítás visszaszámlálóval**. Bekapcsolni a HA tud Wake-on-LAN-nal (lásd lent). Alváskor és leállításkor azonnal „ki”, áramszünet/fagyás esetén a keepalive (45 mp) után. |
 | CPU-terhelés, Memória-használat (attr.: GB), Lefoglalt memória (RAM + lapozófájl; a Feladatkezelő „Lefoglalt” értéke, angolul commit charge) | 30 mp-enként |
-| CPU hőmérséklet (ACPI) | csak ha a gép ACPI-hőzónát ad (sok asztali alaplap nem; ilyenkor nem jelenik meg) |
-| GPU hőmérséklet / terhelés / memória | csak NVIDIA-kártyánál (`nvidia-smi`) |
+| CPU hőmérséklet (attr.: forrás-szenzor, CPU-csomag teljesítménye W-ban) | a processzor saját szenzora (Intel: CPU Package, AMD: Tctl/Tdie) a LibreHardwareMonitor könyvtárral; ehhez a **PawnIO** meghajtó kell (aláírt, nyílt forrású, https://pawnio.eu — a telepítő winget-tel felajánlja). Ennek hiányában az alaplapi „CPU” szenzor vagy az ACPI-hőzóna, ha van |
+| GPU hőmérséklet / terhelés / memória | NVIDIA-nál `nvidia-smi`, egyébként (AMD, Intel is) LibreHardwareMonitor |
 | Hálózat le / fel (kB/s), IP-cím (attr.: MAC, csatoló, link-sebesség), WiFi-jel | WiFi csak ha azon van |
 | Akkumulátor, Töltés | csak laptopon |
 | `Lemez C:`, `Lemez D:`, … telítettség % (attr.: szabad/összes GB, címke, fájlrendszer) | minden belső meghajtó, 5 percenként; új/eltűnt meghajtó magától követi |
